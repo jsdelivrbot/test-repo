@@ -11,6 +11,7 @@ let uploadedBuffer;
 let testBuffer;
 
 let pressButt = 0;
+let count = 0;
 
 app.use(bodyParser.urlencoded({  extended: true}));
 
@@ -29,6 +30,15 @@ app.get('/want-image', function(req, res) {
 app.get('/want-image-press', function(req, res) {  
   res.send("pressButt was " + pressButt);
   pressButt = 1;
+});
+
+app.get('/recieve', function(req, res) {
+	++count;
+	res.send("recieved");
+});
+
+app.get('/recieved', function(req, res) {
+  res.send(""+count);
 });
 
 
