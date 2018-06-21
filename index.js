@@ -1,5 +1,3 @@
-let curErr = 10;
-
 const PORT = process.env.PORT || 5000;
 
 let express = require('express');
@@ -14,15 +12,10 @@ let testBuffer;
 
 let pressButt = 0;
 
-
-let log = "";
-
-
 app.use(bodyParser.urlencoded({  extended: true}));
 
 app.use(bodyParser.json()); 
 app.use(bodyParser.text()); 
-
 
 var MODE = Object.freeze({fitness:"fitness", family:"family", biohack:"biohack"});
 
