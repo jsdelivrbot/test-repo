@@ -582,13 +582,13 @@ function writeTestData() {
 app.get('/test-data', function(req,res) {  log += ("/test-data " + JSON.stringify(req.query) + "</br>"); writeTestData();  res.sendStatus(201);
 });
 
-app.get('/locks', function(req, res) {	res.send(JSON.stringify(locks));
+app.get('/locks', function(req, res) {	log += ("/locks " + JSON.stringify(req.query) + "</br>"); res.send(JSON.stringify(locks));
 });
 
-app.get('/hubs', function(req, res) {	res.send(JSON.stringify(hubs));
+app.get('/hubs', function(req, res) {	log += ("/hubs " + JSON.stringify(req.query) + "</br>"); res.send(JSON.stringify(hubs));
 });
 
-app.get('/users', function(req, res) {	res.send(JSON.stringify(users));
+app.get('/users', function(req, res) {	log += ("/users " + JSON.stringify(req.query) + "</br>"); res.send(JSON.stringify(users));
 });
 
 app.get('/hub', function(req, res) {
