@@ -1,3 +1,5 @@
+let curErr = 10;
+
 const PORT = process.env.PORT || 5000;
 
 let express = require('express');
@@ -12,10 +14,15 @@ let testBuffer;
 
 let pressButt = 0;
 
+
+let log = "";
+
+
 app.use(bodyParser.urlencoded({  extended: true}));
 
 app.use(bodyParser.json()); 
 app.use(bodyParser.text()); 
+
 
 var MODE = Object.freeze({fitness:"fitness", family:"family", biohack:"biohack"});
 
@@ -78,6 +85,7 @@ function User(userID, amazonUID) {
 function Time(h,m) {
 	this.h = h;
 	this.m = m;
+	this.n;
 }
 
 function cmp(time1,time2) {
@@ -209,11 +217,12 @@ function pushCommand(from, to) {
 	from.PIN?(to.command.PIN = from.PIN, to.PIN = from.PIN):1==1;
 	from.mode?(to.command.mode = from.mode, to.mode = from.mode):1==1;
 	
+	from.setTimeN?(lock.setTime.n = parseInt(from.setTimeN), to.command.setTimeN = parseInt(lock.time.n)):1==1;
 	if(from.setTimeM && from.setTimeH) {
-		to.command.setTimeM = from.setTimeM;
-		to.setTime.m = from.setTimeM;
-		to.command.setTimeH = from.setTimeH;
-		to.setTime.h = from.setTimeH;
+		to.command.setTimeM = parseInt(from.setTimeM);
+		to.setTime.m = parseInt(from.setTimeM);
+		to.command.setTimeH = parseInt(from.setTimeH);
+		to.setTime.h = parseInt(from.setTimeH);
 
 		let cd = new Date();
 		let ms = cd.getTime();
@@ -229,37 +238,37 @@ function pushCommand(from, to) {
 			to.command.openCloseTime = {};
 		switch(parseInt(from.setCloseTimeN))
 		{
-			case 0:
+			case 1:
 				arr = to.openCloseTime.Monday;
 				to.command.openCloseTime.Monday = [];
 				dest = to.command.openCloseTime.Monday;
 				break;
-			case 1:
+			case 2:
 				arr = to.openCloseTime.Tuesday;
 				to.command.openCloseTime.Tuesday = [];
 				dest = to.command.openCloseTime.Tuesday;
 				break;
-			case 2:
+			case 3:
 				arr = to.openCloseTime.Wednesday;
 				to.command.openCloseTime.Wednesday = [];
 				dest = to.command.openCloseTime.Wednesday;
 				break;
-			case 3:
+			case 4:
 				arr = to.openCloseTime.Thursday;
 				to.command.openCloseTime.Thursday = [];
 				dest = to.command.openCloseTime.Thursday;
 				break;
-			case 4:
+			case 5:
 				arr = to.openCloseTime.Friday;
 				to.command.openCloseTime.Friday = [];
 				dest = to.command.openCloseTime.Friday;
 				break;
-			case 5:
+			case 6:
 				arr = to.openCloseTime.Saturday;
 				to.command.openCloseTime.Saturday = [];
 				dest = to.command.openCloseTime.Saturday;
 				break;
-			case 6:
+			case 7:
 				arr = to.openCloseTime.Sunday;
 				to.command.openCloseTime.Sunday = [];
 				dest = to.command.openCloseTime.Sunday;
@@ -380,6 +389,15 @@ app.get('/push-command', function(req,res) {
 	delete lock.command.msg;
 });
 
+function updateOpenCloseTime(to, from) {
+	from.forEach((el,i) => {
+		to[i].lock_h = parseInt(el.substr(0,2));
+		to[i].lock_m = parseInt(el.substr(2,2));
+		to[i].unlock_h = parseInt(el.substr(4,2));
+		to[i].unlock_m = parseInt(el.substr(6,2));
+	});
+};
+
 function updateLock(from, lock) {
 	from.lockName?lock.lockName = from.lockName:lock.lockName;
     from.state?lock.state = from.state:lock.state;
@@ -387,13 +405,11 @@ function updateLock(from, lock) {
     from.PIN?lock.PIN = from.PIN:lock.PIN;
     from.battery?lock.battery = from.battery:lock.battery;
 
-    from.setCloseTimeH && from.setCloseTimeM?(lock.setCloseTime.h = from.setCloseTimeH, lock.setCloseTime.m = from.setCloseTimeM):1==1;
-	from.setOpenTimeH && from.setOpenTimeM?(lock.setOpenTime.h = from.setOpenTimeH, lock.setOpenTime.m = from.setOpenTimeM):1==1;
-
+	from.timeN?lock.time.n = parseInt(from.timeN):1==1;
 	if(from.timeH && from.timeM) 
 	{
-	    lock.time.h = from.timeH;
-		lock.time.m = from.timeM;
+	    lock.time.h = parseInt(from.timeH);
+		lock.time.m = parseInt(from.timeM);
 
 		let cd = new Date();
 		let ms = cd.getTime();
@@ -401,6 +417,22 @@ function updateLock(from, lock) {
 		cd.setMinutes(lock.Time.m);
 		lock.shift = cd.getTime() - ms;
 	}
+
+	if(from.Monday)
+		updateOpenCloseTime(lock.openCloseTime.Monday, from.Monday.split(" "));
+	if(from.Tuesday)
+		updateOpenCloseTime(lock.openCloseTime.Tuesday, from.Tuesday.split(" "));
+	if(from.Wednesday)
+		updateOpenCloseTime(lock.openCloseTime.Wednesday, from.Wednesday.split(" "));
+	if(from.Thursday)
+		updateOpenCloseTime(lock.openCloseTime.Thursday, from.Thursday.split(" "));
+	if(from.Friday)
+		updateOpenCloseTime(lock.openCloseTime.Friday, from.Friday.split(" "));
+	if(from.Saturday)
+		updateOpenCloseTime(lock.openCloseTime.Saturday, from.Saturday.split(" "));
+	if(from.Sunday)
+		updateOpenCloseTime(lock.openCloseTime.Sunday, from.Sunday.split(" "));
+
 };
 
 app.post('/get-command', function(req,res) {
@@ -693,7 +725,7 @@ app.post('/alexa',function(req,res) {
       return;
     }
 
-    let lock = hub.locks.find(lock => lock.lockName == req.body.deviceName);
+    let lock = hub.locks.find(lock => lock.lockName == req.body.lockName);
     if(!lock)
     {
       res.send(JSON.stringify({"succ": false, "error": 2, "message": "lock not found"}));
