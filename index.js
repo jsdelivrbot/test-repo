@@ -628,6 +628,15 @@ app.get('/hubs', function(req, res) {	log += ("/hubs " + JSON.stringify(req.quer
 app.get('/users', function(req, res) {	log += ("/users " + JSON.stringify(req.query) + "</br>"); res.send(JSON.stringify(users));
 });
 
+app.post('/locks', function(req, res) {	log += ("/locks " + JSON.stringify(req.body) + "</br>"); res.send(JSON.stringify(locks));
+});
+
+app.post('/hubs', function(req, res) {	log += ("/hubs " + JSON.stringify(req.body) + "</br>"); res.send(JSON.stringify(hubs));
+});
+
+app.post('/users', function(req, res) {	log += ("/users " + JSON.stringify(req.body) + "</br>"); res.send(JSON.stringify(users));
+});
+
 app.get('/hub', function(req, res) {
   log += ("/hub " + JSON.stringify(req.query) + "</br>");
   if(req.query.id && hubs[req.query.id])
