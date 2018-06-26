@@ -88,18 +88,55 @@ function Time(h,m) {
 	this.n;
 }
 
-function cmp(time1,time2) {
-	return time1.h == time2.h?time1.m > time2.m:time1.h > time2.h;
-}
-
-function dateIn(time, lowTime, highTime) {
-	return cmp(time, lowTime) && cmp(highTime, time);
-}
-
 let users = [];
 let hubs = [];
 let locks = [];
 
+
+function oneDateIn(date,openClose) {
+
+	let dateLock = new Date(date);
+	dateLock.setHours(openClose.lock_h);
+	dateLock.setMinutes(openClose.lock_m);
+
+	let dateUnlock = new Date(date);
+	dateUnlock.setHours(openClose.unlock_h);
+	dateUnlock.setMinutes(openClose.unlock_m);
+
+	return date.getTime() > dateLock.getTime() && date.getTime() < dateUnlock.getTime();
+}
+
+function dateIn(cd, lock) {
+	let arr = undefined;
+	switch(cd.getDay)
+	{
+		case 0: 
+			arr = lock.openCloseTime.Monday;
+			break;
+		case 1: 
+			arr = lock.openCloseTime.Tuesday;
+			break;
+		case 2: 
+			arr = lock.openCloseTime.Wednesday;
+			break;
+		case 3: 
+			arr = lock.openCloseTime.Thursday;
+			break;
+		case 4: 
+			arr = lock.openCloseTime.Friday;
+			break;
+		case 5: 
+			arr = lock.openCloseTime.Saturday;
+			break;
+		case 6: 
+			arr = lock.openCloseTime.Sunday;
+			break;
+		default:
+			arr = undefined;
+	}
+
+	return arr.every(openClose => oneDateIn(cd, openClose));
+}
 
 app.get('/hub/register', function(req, res) {
 	if(!req.query.hubID || !req.query.userID)
@@ -217,7 +254,7 @@ function pushCommand(from, to) {
 	from.PIN?(to.command.PIN = from.PIN, to.PIN = from.PIN):1==1;
 	from.mode?(to.command.mode = from.mode, to.mode = from.mode):1==1;
 	
-	from.setTimeN?(lock.setTime.n = parseInt(from.setTimeN), to.command.setTimeN = parseInt(lock.time.n)):1==1;
+	from.setTimeN?(to.setTime.n = parseInt(from.setTimeN), to.command.setTimeN = parseInt(from.setTimeN)):1==1;
 	if(from.setTimeM && from.setTimeH) {
 		to.command.setTimeM = parseInt(from.setTimeM);
 		to.setTime.m = parseInt(from.setTimeM);
@@ -709,6 +746,7 @@ app.get('/test-log', function(req, res) {  req.query.clear?(log = "", res.send("
 
 app.post('/alexa',function(req,res) {
   log += ("/alexa " + JSON.stringify(req.body) + "</br>");
+
   if(req.body.amazonUID)
   {
     let user = users.find(user => user.amazonUID == req.body.amazonUID);
@@ -738,7 +776,7 @@ app.post('/alexa',function(req,res) {
     if(lock.mode == MODE.fitness)
     {
       
-      if(lock.curQuestion < lock.qa.length  && dateIn(new Time(cd.getHours(),cd.getMinutes()), lock.setCloseTime, lock.setOpenTime))
+      if(lock.curQuestion < lock.qa.length  && dateIn(cd,lock))
       {
         if(req.body.answer && req.body.answer == lock.qa[lock.curQuestion].val)
         {
@@ -767,23 +805,23 @@ app.post('/alexa',function(req,res) {
       }
       lock.curQuestion = 0;
 
-      if(req.body.timeH && req.body.timeM)
-      {
-        lock.time.h = req.body.timeH;
-		lock.time.m = req.body.timeM;
-        let cd = new Date();
+      req.body.setTimeN?(lock.setTime.n = parseInt(req.body.setTimeN), lock.command.setTimeN = parseInt(req.body.setTimeN)):1==1;
+	  if(req.body.setTimeM && req.body.setTimeH) {
+		to.command.setTimeM = parseInt(req.body.setTimeM);
+		to.setTime.m = parseInt(req.body.setTimeM);
+		to.command.setTimeH = parseInt(req.body.setTimeH);
+		to.setTime.h = parseInt(req.body.setTimeH);
+
+		let cd = new Date();
 		let ms = cd.getTime();
-		cd.setHours(lock.Time.h);
-		cd.setMinutes(lock.Time.m);
-		lock.shift = cd.getTime() - ms;
-      }
+		cd.setHours(to.setTime.h);
+		cd.setMinutes(to.setTime.m);
+		to.shift = ms - cd.getTime();
+	  }
 
-      req.body.setCloseTimeH && req.body.setCloseTimeM?(lock.setCloseTime.h = req.body.setCloseTimeH, lock.setCloseTime.m = req.body.setCloseTimeM):1==1;
-	  req.body.setOpenTimeH && req.body.setOpenTimeM?(lock.setOpenTime.h = req.body.setOpenTimeH, lock.setOpenTime.m = req.body.setOpenTimeM):1==1;
-
-      req.body.open?lock.setOpen = req.body.open:lock.setOpen;
-      req.body.signalFind?lock.signal = req.body.signalFind:lock.signal;
-
+      req.body.open?(lock.setOpen = req.body.open, lock.command.setOpen = req.body.open):lock.setOpen;
+      req.body.signalFind?(lock.signal = req.body.signalFind, lock.command.signal = req.body.signalFind):lock.signal;
+//72517
       if(req.body.setMode == MODE.family && req.body.setPIN && req.body.setOpenTimeH && req.body.setOpenTimeM && req.body.setCloseTimeH && req.body.setCloseTimeM)
       {
         lock.mode = req.body.setMode;
