@@ -780,7 +780,7 @@ app.post('/alexa',function(req,res) {
     }
 
     let cd = new Date();
-	cd.setTime() = cd.getTime() + lock.shift;
+	cd.setTime(cd.getTime() + lock.shift);
 
     if(lock.mode == MODE.fitness)
     {
