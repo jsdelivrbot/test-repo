@@ -828,9 +828,9 @@ app.post('/alexa',function(req,res) {
 		to.shift = ms - cd.getTime();
 	  }
 
-      req.body.open?(lock.setOpen = req.body.open, lock.command.setOpen = req.body.open):lock.setOpen;
+      req.body.setOpen?(lock.setOpen = req.body.setOpen, lock.command.setOpen = req.body.setOpen):lock.setOpen;
       req.body.signalFind?(lock.signal = req.body.signalFind, lock.command.signal = req.body.signalFind):lock.signal;
-//72517
+
       if(req.body.setMode == MODE.family && req.body.setPIN && req.body.setOpenTimeH && req.body.setOpenTimeM && req.body.setCloseTimeH && req.body.setCloseTimeM)
       {
         lock.mode = req.body.setMode;
