@@ -572,7 +572,6 @@ app.post('/update-lock', function(req, res) {
 	res.sendStatus(404);
 });
 
-
 function writeTestData() {
   users = [];
   locks = [];
@@ -765,14 +764,14 @@ app.post('/alexa',function(req,res) {
       return;
     }
 
-    let hub = user.hubs.find(hub => hub.hubName == req.body.hubName);
+    let hub = user.hubs.find(hub => hub.hubName.toUpperCase() === req.body.hubName.toUpperCase());
     if(!hub)
     {
       res.send(JSON.stringify({"succ": false, "error": 1, "message": "hub not found"}));
       return;
     }
 
-    let lock = hub.locks.find(lock => lock.lockName == req.body.lockName);
+    let lock = hub.locks.find(lock => lock.lockName.toUpperCase() === req.body.lockName.toUpperCase());
     if(!lock)
     {
       res.send(JSON.stringify({"succ": false, "error": 2, "message": "lock not found"}));
